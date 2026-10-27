@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purgatorium Agentium — sandboxes for your team and its agents</title>
+<meta name="description" content="Self-hosted sandboxes for your team and their AI agents: everyone gets their own Docker, every app gets a URL, idle sandboxes sleep.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+  * { box-sizing: border-box }
+  :root {
+    color-scheme: light dark;
+    --bg: light-dark(#fbf6f2, #0a0705);
+    --card: light-dark(rgba(255,255,255,.86), rgba(20,15,12,.72));
+    --line: light-dark(#ecdcd0, #2c211b);
+    --fg: light-dark(#1c1c1f, #e8e8e8);
+    --dim: light-dark(#58585a, #aaa);
+    --muted: light-dark(#6e6e76, #888);
+    --ember: light-dark(#9a3412, #ffd9a8);
+    --ember-2: light-dark(#c2410c, #f2a36b);
+    --accent: #ea580c;
+    --accent-hover: #c2410c;
+    --code-bg: light-dark(#f4ece5, #120d0a);
+    --code-fg: light-dark(#2a2a30, #d6d6da);
+    --glow: light-dark(rgba(234,88,12,.10), rgba(234,88,12,.18));
+  }
+  html { scroll-behavior: smooth }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background-image: radial-gradient(60rem 30rem at 50% -10rem, var(--glow), transparent 70%);
+  }
+  a { color: var(--ember-2) }
+  code, pre { font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace }
+  .wrap { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; padding: 0 20px }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0 }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; color: var(--fg); text-decoration: none }
+  .brand img { width: 30px; height: 30px }
+  nav { display: flex; align-items: center; gap: 18px; font-size: 15px }
+  nav a { color: var(--dim); text-decoration: none }
+  nav a:hover { color: var(--fg) }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 10px;
+    font-weight: 600; font-size: 15px; text-decoration: none; border: 1px solid var(--line); color: var(--fg); background: var(--card);
+    transition: border-color .15s, background .15s, transform .15s;
+  }
+  .btn:hover { border-color: var(--ember-2); transform: translateY(-1px) }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover) }
+  nav .btn { padding: 7px 14px; font-size: 14px }
+  nav .btn.primary { color: #fff }
+
+  .hero { text-align: center; padding: 72px 0 40px }
+  .hero img.logo { width: 84px; height: 84px; filter: drop-shadow(0 6px 24px rgba(255,90,0,.45)) }
+  .eyebrow { margin: 18px 0 0; color: var(--ember-2); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 13px }
+  h1 { margin: 10px auto 16px; max-width: 780px; font-size: clamp(32px, 5.4vw, 54px); line-height: 1.12; letter-spacing: -.02em }
+  h1 em { font-style: normal; color: var(--ember) }
+  .lead { margin: 0 auto; max-width: 640px; color: var(--dim); font-size: 18px }
+  .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 30px }
+  .fact { margin-top: 18px; color: var(--muted); font-size: 14px }
+
+  .demo { display: block; margin: 32px auto 0; max-width: 860px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0,0,0,.25) }
+  .demo img { display: block; width: 100%; height: auto }
+
+  section { padding: 56px 0 }
+  h2 { margin: 0 0 8px; font-size: 28px; letter-spacing: -.01em }
+  .sub { margin: 0 0 28px; color: var(--dim) }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; backdrop-filter: blur(6px) }
+  .card h3 { margin: 0 0 6px; font-size: 17px }
+  .card p { margin: 0; color: var(--dim); font-size: 15px }
+  .card .ico { font-size: 22px; line-height: 1; margin-bottom: 10px; color: var(--ember-2) }
+
+  .agents { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: center }
+  .agents ul { margin: 0; padding-left: 20px; color: var(--dim) }
+  .agents li { margin: 6px 0 }
+  .agents li strong { color: var(--fg) }
+
+  .code { position: relative; background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; overflow-x: auto }
+  .code pre { margin: 0; white-space: pre }
+  .code .c { color: var(--muted) }
+  .copy { position: absolute; top: 10px; right: 10px; padding: 4px 10px; font: 600 12px/1.6 inherit; font-family: inherit; border-radius: 7px; border: 1px solid var(--line); background: var(--card); color: var(--dim); cursor: pointer }
+  .copy:hover { color: var(--fg) }
+  .note { margin-top: 12px; color: var(--muted); font-size: 14px }
+
+  footer { position: relative; z-index: 1; border-top: 1px solid var(--line); margin-top: 40px; padding: 28px 0 40px; color: var(--muted); font-size: 14px }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px }
+  footer a { color: var(--dim) }
+
+  @media (max-width: 720px) {
+    nav a:not(.btn) { display: none }
+    .hero { padding-top: 40px }
+    .agents { grid-template-columns: 1fr }
+  }
+</style>
+</head>
+<body>
+<canvas data-embers aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none"></canvas>
+
+<div class="wrap">
+  <header>
+    <a class="brand" href="/"><img src="logo.svg" alt="">Purgatorium Agentium</a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#agents">Agents</a>
+      <a href="https://csakaszamok.github.io/p9m/latest/">Docs</a>
+      <a class="btn primary" href="https://github.com/csakaszamok/p9m">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <img class="logo" src="logo.svg" alt="">
+    <p class="eyebrow">Purgatorium Agentium · p9m</p>
+    <h1>Sandboxes for your team <em>and its agents</em></h1>
+    <p class="lead">Everyone gets their own Docker, every app gets a URL, idle sandboxes sleep. A self-hosted Vercel for the apps your team and its agents spin up.</p>
+    <div class="cta">
+      <a class="btn primary" href="#try">Try it on your laptop</a>
+      <a class="btn" href="https://csakaszamok.github.io/p9m/latest/">Read the docs</a>
+    </div>
+    <p class="fact">About 10 seconds from <em>New sandbox</em> to your own Docker and a public URL.</p>
+    <a class="demo" href="https://github.com/csakaszamok/p9m/blob/main/docs/media/demo.gif" title="Watch it in real time">
+      <img src="demo-thumb.webp" alt="Creating a sandbox and opening its app, in real time: about 10 seconds" width="1280" height="720" loading="lazy">
+    </a>
+  </div>
+
+  <section id="features">
+    <h2>Hide the complexity. Keep it simple.</h2>
+    <p class="sub">Focus on what matters, not on the servers under it.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">⬢</div><h3>Its own Docker</h3><p>Every sandbox has its own Docker daemon, with a Portainer UI if you want one.</p></div>
+      <div class="card"><div class="ico">↗</div><h3>A URL for every app</h3><p>Each app gets a public address, plus TLS addresses for Postgres, Redis and SSH.</p></div>
+      <div class="card"><div class="ico">☾</div><h3>Sleeps when idle</h3><p>Idle sandboxes sleep and wake on the next request. A delete archives: nothing is lost.</p></div>
+      <div class="card"><div class="ico">⌂</div><h3>Self-hosted</h3><p>One <code>docker compose up</code> on your own server. Open source, AGPL-3.0.</p></div>
+    </div>
+  </section>
+
+  <section id="agents">
+    <div class="agents">
+      <div>
+        <h2>Made for agents</h2>
+        <p class="sub">Let an agent build, deploy and check its own app, in a sandbox it cannot leave.</p>
+        <ul>
+          <li><strong>Tokens limited to one sandbox:</strong> an agent reaches only what you gave it.</li>
+          <li><strong>An MCP server:</strong> every API call is a tool, so any MCP client can drive it.</li>
+          <li><strong>A Claude Code plugin:</strong> <code>/p9m:init</code> connects a project in one step.</li>
+          <li><strong>An agent guide</strong> that tells the agent how to deploy here.</li>
+        </ul>
+      </div>
+      <div class="code">
+        <button class="copy" type="button" data-copy="plugin">Copy</button>
+<pre id="plugin"><span class="c"># in Claude Code</span>
+/plugin marketplace add p9m-team/p9m
+/p9m:init</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="try">
+    <h2>Try it on your laptop</h2>
+    <p class="sub">With Docker Desktop, or Docker Engine and the compose plugin, and ports 80 and 443 free.</p>
+    <div class="code">
+      <button class="copy" type="button" data-copy="install">Copy</button>
+<pre id="install">mkdir p9m &amp;&amp; cd p9m
+curl -fsSLO https://github.com/csakaszamok/p9m/releases/latest/download/docker-compose.yml
+curl -fsSL https://github.com/csakaszamok/p9m/releases/latest/download/setup.sh | bash   <span class="c"># prints the admin password</span>
+docker compose up -d</pre>
+    </div>
+    <p class="note">Then open <strong>http://p9m.lvh.me</strong>, sign in as administrator and press <strong>New sandbox</strong>. Installing on a server: <a href="https://csakaszamok.github.io/p9m/latest/install/">the install guide</a>.</p>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>Purgatorium (p9m) · open source under AGPL-3.0 · early, before 1.0</span>
+    <span><a href="https://github.com/csakaszamok/p9m">GitHub</a> · <a href="https://csakaszamok.github.io/p9m/latest/">Docs</a></span>
+  </div>
+</footer>
+
+<script>
+  for (const b of document.querySelectorAll('[data-copy]')) {
+    b.addEventListener('click', async () => {
+      const text = document.getElementById(b.dataset.copy).innerText.split('\n').filter(l => !l.startsWith('#')).map(l => l.replace(/\s+# .*$/, '')).join('\n').trim()
+      try { await navigator.clipboard.writeText(text); b.textContent = 'Copied' } catch { b.textContent = 'Select it' }
+      setTimeout(() => { b.textContent = 'Copy' }, 1500)
+    })
+  }
+</script>
+<script src="embers.js" defer></script>
+</body>
+</html>

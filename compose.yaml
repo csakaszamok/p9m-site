@@ -1,0 +1,17 @@
+# The p9m.dev homepage. Runs in a Purgatorium sandbox; doco-cd there rebuilds it on every push to main.
+services:
+  web:
+    build: .
+    image: p9m-site:latest
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    ports:
+      - "8080:80"
+    labels:
+      # <sandbox>-web.<apps domain>; p9m.dev reaches it through a Traefik rule on the server
+      p9m.subdomain: web
+      p9m.access: public

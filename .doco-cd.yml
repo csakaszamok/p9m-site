@@ -1,0 +1,4 @@
+# doco-cd (in the p9m sandbox "site") deploys this repository on every push to main: docker compose up --build
+name: p9m-site
+build:
+  force_image_pull: true
